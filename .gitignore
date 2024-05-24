@@ -1,0 +1,14 @@
+.idea/
+.vs/
+.vscode/
+
+task-management-backend/bin/*
+task-management-backend/obj/*
+task-management-backend.Tests/bin/*
+task-management-backend.Tests/obj/*
+
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
