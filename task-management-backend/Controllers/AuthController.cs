@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -53,6 +54,13 @@ public class AuthController(ApplicationDbContext dbContext) : ControllerBase
 
         var token = GenerateJwtToken(user);
         return Ok(new { token });
+    }
+    
+    [HttpGet("check")]
+    [Authorize]
+    public async Task<IActionResult> Check()
+    {
+        return Ok();
     }
 
     private string GenerateJwtToken(User user)

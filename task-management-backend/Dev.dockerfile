@@ -13,7 +13,6 @@ RUN dotnet restore
 
 # Copy everything else and build
 COPY . ./
-RUN rm entrypoint.sh
 RUN dotnet build -c Debug --no-restore
 
 COPY entrypoint.sh /usr/bin/entrypoint.sh
