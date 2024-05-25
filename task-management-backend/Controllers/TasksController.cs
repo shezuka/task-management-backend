@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using task_management_backend.Data;
+using task_management_backend.Helpers;
 using task_management_backend.Models.DTOs;
 
 namespace task_management_backend.Controllers;
@@ -15,10 +16,13 @@ public class TasksController(ApplicationDbContext dbContext) : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Task>>> GetTasks()
     {
-        var tasks = await dbContext.Tasks.ToListAsync();
+        var tasks = await dbContext.Tasks
+            .OrderBy(t => t.Id)
+            .ToListAsync();
         return Ok(tasks);
     }
 
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<Task>> GetTask(int id)
     {
         var task = await dbContext.Tasks.FindAsync(id);
@@ -30,6 +34,7 @@ public class TasksController(ApplicationDbContext dbContext) : ControllerBase
         return Ok(task);
     }
 
+    [HttpPost]
     public async Task<ActionResult<Task>> CreateTask(TaskCreateDto taskCreateDto)
     {
         var sUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -41,14 +46,15 @@ public class TasksController(ApplicationDbContext dbContext) : ControllerBase
             Description = taskCreateDto.Description,
             UserId = userId,
             Status = taskCreateDto.Status,
-            DueDate = taskCreateDto.DueDate,
+            DueDate = taskCreateDto.DueDate.SetKindUtc(),
         };
-        
+
         dbContext.Tasks.Add(task);
         await dbContext.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetTask), new {id = task.Id}, task);
+        return CreatedAtAction(nameof(GetTask), new { id = task.Id }, task);
     }
 
+    [HttpPut("{id:int}")]
     public async Task<ActionResult<Task>> UpdateTask(int id, TaskUpdateDto taskUpdateDto)
     {
         var task = await dbContext.Tasks.FindAsync(id);
@@ -56,35 +62,23 @@ public class TasksController(ApplicationDbContext dbContext) : ControllerBase
         {
             return NotFound();
         }
-        
+
         task.Title = taskUpdateDto.Title;
         task.Description = taskUpdateDto.Description;
-        task.UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        task.DueDate = taskUpdateDto.DueDate;
+        task.DueDate = taskUpdateDto.DueDate.SetKindUtc();
         task.Status = taskUpdateDto.Status;
 
         dbContext.Entry(task).State = EntityState.Modified;
-        
         await dbContext.SaveChangesAsync();
-
         return NoContent();
     }
 
+    [HttpDelete("{id:int}")]
     public async Task<ActionResult<Task>> DeleteTask(int id)
     {
-        var task = await dbContext.Tasks.FindAsync(new
-        {
-            id = id,
-            userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!)
-        });
-        if (task == null)
-        {
-            return NotFound();
-        }
-
-        dbContext.Tasks.Remove(task);
-        await dbContext.SaveChangesAsync();
-
+        await dbContext.Tasks
+            .Where(x => x.Id == id && x.UserId == int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!))
+            .ExecuteDeleteAsync();
         return NoContent();
     }
 }
