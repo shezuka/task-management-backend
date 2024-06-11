@@ -68,7 +68,7 @@ public class AuthController(ApplicationDbContext dbContext) : ControllerBase
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Username)
+            new Claim(ClaimTypes.Name, user.Username),
         };
 
         var key = new SymmetricSecurityKey(JwtHelper.GetKey());
@@ -76,9 +76,9 @@ public class AuthController(ApplicationDbContext dbContext) : ControllerBase
         var expires = DateTime.Now.AddDays(JwtHelper.GetExpireDays());
 
         var token = new JwtSecurityToken(
-            JwtHelper.GetIssuer(),
-            JwtHelper.GetAudience(),
-            claims,
+            issuer: JwtHelper.GetIssuer(),
+            audience: JwtHelper.GetAudience(),
+            claims: claims,
             expires: expires,
             signingCredentials: creds
         );
